@@ -5,17 +5,19 @@ export type AuthenticationMode =
   | 'missing'
   | 'invalid-username'
   | 'invalid-password'
-  | 'malformed';
+  | 'malformed'
+  | 'unsupported';
 
 export function createBasicAuthHeader(
   username = env.username,
   password = env.password,
 ): string {
-  const credentials = Buffer.from(`${username}:${password}`).toString(
-    'base64',
-  );
+  const encodedCredentials = Buffer.from(
+    `${username}:${password}`,
+    'utf8',
+  ).toString('base64');
 
-  return `Basic ${credentials}`;
+  return `Basic ${encodedCredentials}`;
 }
 
 export function createAuthenticationHeaders(
@@ -33,7 +35,7 @@ export function createAuthenticationHeaders(
     case 'invalid-username':
       return {
         Authorization: createBasicAuthHeader(
-          `invalid-${Date.now()}`,
+          `invalid-user-${Date.now()}`,
           env.password,
         ),
       };
@@ -42,18 +44,25 @@ export function createAuthenticationHeaders(
       return {
         Authorization: createBasicAuthHeader(
           env.username,
-          `invalid-${Date.now()}`,
+          `invalid-password-${Date.now()}`,
         ),
       };
 
     case 'malformed':
       return {
-        Authorization: 'Basic malformed-credentials',
+        Authorization: 'Basic malformed-value',
+      };
+
+    case 'unsupported':
+      return {
+        Authorization: 'Bearer invalid-test-token',
       };
 
     default: {
-      const unreachableMode: never = mode;
-      throw new Error(`Unsupported authentication mode: ${unreachableMode}`);
+      const exhaustiveCheck: never = mode;
+      throw new Error(
+        `Unsupported authentication mode: ${exhaustiveCheck}`,
+      );
     }
   }
 }
